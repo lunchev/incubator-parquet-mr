@@ -37,7 +37,7 @@ import org.apache.parquet.bytes.BytesUtils;
 public class ByteBasedBitPackingGenerator {
 
   private static final String CLASS_NAME_PREFIX = "ByteBitPacking";
-  private static final int PACKER_COUNT = 32;
+  private static final int PACKER_COUNT = 64;
 
   public static void main(String[] args) throws Exception {
     String basePath = args[0];
@@ -66,7 +66,7 @@ public class ByteBasedBitPackingGenerator {
     fw.append(" */\n");
     fw.append("public abstract class " + className + " {\n");
     fw.append("\n");
-    fw.append("  private static final BytePacker[] packers = new BytePacker[33];\n");
+    fw.append("  private static final BytePacker[] packers = new BytePacker[65];\n");
     fw.append("  static {\n");
     for (int i = 0; i <= PACKER_COUNT; i++) {
       fw.append("    packers[" + i + "] = new Packer" + i + "();\n");
@@ -95,12 +95,20 @@ public class ByteBasedBitPackingGenerator {
     fw.append("    }\n");
     fw.append("\n");
     // Packing
-    generatePack(fw, bitWidth, 1, msbFirst);
-    generatePack(fw, bitWidth, 4, msbFirst);
+    generatePack(fw, bitWidth, 1, "int", msbFirst);
+    generatePack(fw, bitWidth, 4, "int", msbFirst);
 
     // Unpacking
-    generateUnpack(fw, bitWidth, 1, msbFirst);
-    generateUnpack(fw, bitWidth, 4, msbFirst);
+    generateUnpack(fw, bitWidth, 1, "int", msbFirst);
+    generateUnpack(fw, bitWidth, 4, "int", msbFirst);
+
+    // Packing
+    generatePack(fw, bitWidth, 1, "long", msbFirst);
+    generatePack(fw, bitWidth, 4, "long", msbFirst);
+
+    // Unpacking
+    generateUnpack(fw, bitWidth, 1, "long", msbFirst);
+    generateUnpack(fw, bitWidth, 4, "long", msbFirst);
 
     fw.append("  }\n");
   }
@@ -176,10 +184,19 @@ public class ByteBasedBitPackingGenerator {
     fw.append("           ");
   }
 
-  private static void generatePack(FileWriter fw, int bitWidth, int batch, boolean msbFirst) throws IOException {
-    int mask = genMask(bitWidth);
-    fw.append("    public final void pack" + (batch * 8) + "Values(final int[] in, final int inPos, final byte[] out, final int outPos) {\n");
+  private static void generatePack(FileWriter fw, int bitWidth, int batch, String valueTypeName, boolean msbFirst) throws IOException {
+    long mask = genMask(bitWidth);
+    if (bitWidth == 32 && valueTypeName.equals("int")) {
+      mask = -1;
+    }
+    String maskSuffix = valueTypeName.equals("long") ? "L" : "";
+    fw.append("    public final void pack" + (batch * 8) + "Values(final " + valueTypeName + "[] in, final int inPos, final byte[] out, final int outPos) {\n");
     for (int byteIndex = 0; byteIndex < bitWidth * batch; ++byteIndex) {
+      if (bitWidth > 32 && valueTypeName.equals("int")) {
+        fw.append("      //TODO: say that there is an error here.\n");
+        break;
+      }
+      
       fw.append("      out[" + align(byteIndex, 2) + " + outPos] = (byte)((\n");
       int startIndex = (byteIndex * 8) / bitWidth;
       int endIndex = ((byteIndex + 1) * 8 + bitWidth - 1) / bitWidth;
@@ -198,18 +215,25 @@ public class ByteBasedBitPackingGenerator {
         } else if (shift < 0) {
           shiftString = " <<  " + ( - shift);
         }
-        fw.append("((in[" + align(valueIndex, 2) + " + inPos] & " + mask + ")" + shiftString + ")");
+        fw.append("((in[" + align(valueIndex, 2) + " + inPos] & " + mask + maskSuffix + ")" + shiftString + ")");
       }
       fw.append(") & 255);\n");
     }
     fw.append("    }\n");
   }
 
-  private static void generateUnpack(FileWriter fw, int bitWidth, int batch, boolean msbFirst)
+  private static void generateUnpack(FileWriter fw, int bitWidth, int batch, String valueTypeName, boolean msbFirst)
       throws IOException {
-    fw.append("    public final void unpack" + (batch * 8) + "Values(final byte[] in, final int inPos, final int[] out, final int outPos) {\n");
-    if (bitWidth > 0) {
-      int mask = genMask(bitWidth);
+    fw.append("    public final void unpack" + (batch * 8) + "Values(final byte[] in, final int inPos, final " + valueTypeName + "[] out, final int outPos) {\n");
+
+    if (bitWidth > 32 && valueTypeName.equals("int")) {
+      fw.append("      //TODO: say that there is an error here.\n");
+    } else if (bitWidth > 0) {
+      long mask = genMask(bitWidth);
+      if (bitWidth == 32 && valueTypeName.equals("int")) {
+        mask = -1;
+      }
+      String maskSuffix = valueTypeName.equals("long") ? "L" : "";
       for (int valueIndex = 0; valueIndex < (batch * 8); ++valueIndex) {
         fw.append("      out[" + align(valueIndex, 2) + " + outPos] =\n");
 
@@ -230,7 +254,7 @@ public class ByteBasedBitPackingGenerator {
           } else if (shift > 0){
             shiftString = "<<  " + shift;
           }
-          fw.append(" (((((int)in[" + align(byteIndex, 2) + " + inPos]) & 255) " + shiftString + ") & " + mask + ")");
+          fw.append(" (((((" + valueTypeName + ")in[" + align(byteIndex, 2) + " + inPos]) & 255" + maskSuffix + ") " + shiftString + ") & " + mask + maskSuffix + ")");
         }
         fw.append(";\n");
       }
@@ -238,8 +262,8 @@ public class ByteBasedBitPackingGenerator {
     fw.append("    }\n");
   }
 
-  private static int genMask(int bitWidth) {
-    int mask = 0;
+  private static long genMask(int bitWidth) {
+    long mask = 0;
     for (int i = 0; i < bitWidth; i++) {
       mask <<= 1;
       mask |= 1;

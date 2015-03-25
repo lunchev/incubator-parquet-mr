@@ -139,6 +139,19 @@ public class DeltaBinaryPackingValuesWriterTest {
   }
 
   @Test
+  public void shouldReadMaxMinValueLong() throws IOException {
+    long[] data = new long[10];
+    for (int i = 0; i < data.length; i++) {
+      if(i%2==0) {
+        data[i]=Long.MIN_VALUE;
+      }else {
+        data[i]=Long.MAX_VALUE;
+      }
+    }
+    shouldReadAndWriteLong(data, data.length);
+  }
+
+  @Test
   public void shouldReturnCorrectOffsetAfterInitialization() throws IOException {
     int[] data = new int[2 * blockSize + 3];
     for (int i = 0; i < data.length; i++) {
@@ -209,6 +222,22 @@ public class DeltaBinaryPackingValuesWriterTest {
   }
 
   @Test
+  public void randomDataTestLong() throws IOException {
+    int maxSize = 1000;
+    long[] data = new long[maxSize];
+
+    for (int round = 0; round < 100000; round++) {
+      int size = random.nextInt(maxSize);
+
+      for (int i = 0; i < size; i++) {
+        data[i] = random.nextLong();
+      }
+      shouldReadAndWriteLong(data, size);
+      writer.reset();
+    }
+  }
+
+  @Test
   public void randomDataTest() throws IOException {
     int maxSize = 1000;
     int[] data = new int[maxSize];
@@ -228,6 +257,13 @@ public class DeltaBinaryPackingValuesWriterTest {
 
   private void shouldWriteAndRead(int[] data) throws IOException {
     shouldReadAndWrite(data, data.length);
+    writer.reset();
+    
+    long[] dataInLong = new long[data.length]; 
+    for (int i = 0; i < data.length; i++) {
+      dataInLong[i] = (long) data[i];
+    }
+    shouldReadAndWriteLong(dataInLong, data.length);
   }
 
   private void shouldReadAndWrite(int[] data, int length) throws IOException {
@@ -257,6 +293,36 @@ public class DeltaBinaryPackingValuesWriterTest {
   private void writeData(int[] data, int length) {
     for (int i = 0; i < length; i++) {
       writer.writeInteger(data[i]);
+    }
+  }
+
+  private void shouldReadAndWriteLong(long[] data, int length) throws IOException {
+    writeDataLong(data, length);
+    reader = new DeltaBinaryPackingValuesReader();
+    byte[] page = writer.getBytes().toByteArray();
+    int miniBlockSize = blockSize / miniBlockNum;
+
+    double miniBlockFlushed = Math.ceil(((double) length - 1) / miniBlockSize);
+    double blockFlushed = Math.ceil(((double) length - 1) / blockSize);
+    double estimatedSize = 3 * 5 + 1 * 10 //blockHeader, 3 * int + 1 * long
+        + 8 * miniBlockFlushed * miniBlockSize //data(aligned to miniBlock)
+        + blockFlushed * miniBlockNum //bitWidth of mini blocks
+        + (10.0 * blockFlushed);//min delta for each block
+    assertTrue(estimatedSize >= page.length);
+    reader.initFromPage(100, page, 0);
+
+    for (int i = 0; i < length; i++) {
+      assertEquals(data[i], reader.readLong());
+    }
+  }
+
+  private void writeDataLong(long[] data) {
+    writeDataLong(data, data.length);
+  }
+
+  private void writeDataLong(long[] data, int length) {
+    for (int i = 0; i < length; i++) {
+      writer.writeLong(data[i]);
     }
   }
 }

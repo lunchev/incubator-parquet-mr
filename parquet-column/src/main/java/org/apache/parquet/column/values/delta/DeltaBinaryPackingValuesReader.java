@@ -39,12 +39,12 @@ public class DeltaBinaryPackingValuesReader extends ValuesReader {
    * values read by the caller
    */
   private int valuesRead;
-  private int minDeltaInCurrentBlock;
+  private long minDeltaInCurrentBlock;
   private byte[] page;
   /**
    * stores the decoded values including the first value which is written to the header
    */
-  private int[] valuesBuffer;
+  private long[] valuesBuffer;
   /**
    * values loaded to the buffer, it could be bigger than the totalValueCount
    * when data is not aligned to mini block, which means padding 0s are in the buffer
@@ -73,7 +73,7 @@ public class DeltaBinaryPackingValuesReader extends ValuesReader {
     bitWidths = new int[config.miniBlockNumInABlock];
 
     //read first value from header
-    valuesBuffer[valuesBuffered++] = BytesUtils.readZigZagVarInt(in);
+    valuesBuffer[valuesBuffered++] = BytesUtils.readZigZagVarLong(in);
 
     while (valuesBuffered < totalValueCount) { //values Buffered could be more than totalValueCount, since we flush on a mini block basis
       loadNewBlockToBuffer();
@@ -93,7 +93,7 @@ public class DeltaBinaryPackingValuesReader extends ValuesReader {
   private void allocateValuesBuffer() {
     int totalMiniBlockCount = (int) Math.ceil((double) totalValueCount / config.miniBlockSizeInValues);
     //+ 1 because first value written to header is also stored in values buffer
-    valuesBuffer = new int[totalMiniBlockCount * config.miniBlockSizeInValues + 1];
+    valuesBuffer = new long[totalMiniBlockCount * config.miniBlockSizeInValues + 1];
   }
 
   @Override
@@ -104,6 +104,12 @@ public class DeltaBinaryPackingValuesReader extends ValuesReader {
 
   @Override
   public int readInteger() {
+    // TODO: probably implement it separately
+    return (int) readLong();
+  }
+
+  @Override
+  public long readLong() {
     checkRead();
     return valuesBuffer[valuesRead++];
   }
@@ -116,7 +122,7 @@ public class DeltaBinaryPackingValuesReader extends ValuesReader {
 
   private void loadNewBlockToBuffer() {
     try {
-      minDeltaInCurrentBlock = BytesUtils.readZigZagVarInt(in);
+      minDeltaInCurrentBlock = BytesUtils.readZigZagVarLong(in);
     } catch (IOException e) {
       throw new ParquetDecodingException("can not read min delta in current block", e);
     }

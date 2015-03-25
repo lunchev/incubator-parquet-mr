@@ -113,6 +113,23 @@ abstract public class BytesInput {
   }
 
   /**
+   * @param longValue the long to write
+   * @return a BytesInput that will write var long
+   */
+  public static BytesInput fromUnsignedVarLong(long longValue) {
+    return new UnsignedVarLongBytesInput(longValue);
+  }
+
+  /**
+   *
+   * @param longValue the long to write
+   */
+  public static BytesInput fromZigZagVarLong(long longValue) {
+    long zigZag = (longValue << 1) ^ (longValue >> 63);
+    return new UnsignedVarLongBytesInput(zigZag);
+  }
+
+  /**
    * @param arrayOut
    * @return a BytesInput that will write the content of the buffer
    */
@@ -280,7 +297,32 @@ abstract public class BytesInput {
 
     @Override
     public long size() {
+      // TODO: use `int s = (38 - Long.numberOfLeadingZeros(longValue)) / 7;` since it takes one less operation. Derived from:
+      // size = roundUp(MostSignificantBit(intValue) / 7) 
+      // = roundUp((32 - numberOfLeadingZeros(intValue)) / 7)
+      // = roundDown((32 - numberOfLeadingZeros(intValue) + 6) / 7)
+      // = (38 - numberOfLeadingZeros(intValue)) / 7
       int s = 5 - ((Integer.numberOfLeadingZeros(intValue) + 3) / 7);
+      return s == 0 ? 1 : s;
+    }
+  }
+
+  private static class UnsignedVarLongBytesInput extends BytesInput {
+
+    private final long longValue;
+
+    public UnsignedVarLongBytesInput(long longValue) {
+      this.longValue = longValue;
+    }
+
+    @Override
+    public void writeAllTo(OutputStream out) throws IOException {
+      BytesUtils.writeUnsignedVarLong(longValue, out);
+    }
+
+    @Override
+    public long size() {
+      int s = (70 - Long.numberOfLeadingZeros(longValue)) / 7;
       return s == 0 ? 1 : s;
     }
   }

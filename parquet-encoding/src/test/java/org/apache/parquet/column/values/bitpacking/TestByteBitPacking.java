@@ -55,10 +55,10 @@ public class TestByteBitPacking {
       long[] unpacked32 = new long[32];
       long[] unpacked8 = new long[32];
       long[] values = generateValuesLong(i);
-      packUnpack32(Packer.BIG_ENDIAN.newBytePacker(i), values, unpacked32);
+      packUnpack32(Packer.BIG_ENDIAN.newBytePackerForLong(i), values, unpacked32);
       LOG.debug("Output 32: " + TestBitPacking.toString(unpacked32));
       Assert.assertArrayEquals("width "+i, values, unpacked32);
-      packUnpack8(Packer.BIG_ENDIAN.newBytePacker(i), values, unpacked8);
+      packUnpack8(Packer.BIG_ENDIAN.newBytePackerForLong(i), values, unpacked8);
       LOG.debug("Output 8: " + TestBitPacking.toString(unpacked8));
       Assert.assertArrayEquals("width "+i, values, unpacked8);
     }
@@ -71,14 +71,14 @@ public class TestByteBitPacking {
     packer.unpack32Values(packed, 0, unpacked, 0);
   }
 
-  private void packUnpack32(BytePacker packer, long[] values, long[] unpacked) {
+  private void packUnpack32(BytePackerForLong packer, long[] values, long[] unpacked) {
     byte[] packed = new byte[packer.getBitWidth() * 4];
     packer.pack32Values(values, 0, packed, 0);
     LOG.debug("packed: " + TestBitPacking.toString(packed));
     packer.unpack32Values(packed, 0, unpacked, 0);
   }
 
-  private void packUnpack8(BytePacker packer, long[] values, long[] unpacked) {
+  private void packUnpack8(BytePackerForLong packer, long[] values, long[] unpacked) {
     byte[] packed = new byte[packer.getBitWidth() * 4];
     for (int i = 0; i < 4; i++) {
       packer.pack8Values(values,  8 * i, packed, packer.getBitWidth() * i);

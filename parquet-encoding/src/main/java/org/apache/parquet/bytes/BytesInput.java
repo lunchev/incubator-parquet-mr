@@ -297,12 +297,7 @@ abstract public class BytesInput {
 
     @Override
     public long size() {
-      // TODO: use `int s = (38 - Long.numberOfLeadingZeros(longValue)) / 7;` since it takes one less operation. Derived from:
-      // size = roundUp(MostSignificantBit(intValue) / 7) 
-      // = roundUp((32 - numberOfLeadingZeros(intValue)) / 7)
-      // = roundDown((32 - numberOfLeadingZeros(intValue) + 6) / 7)
-      // = (38 - numberOfLeadingZeros(intValue)) / 7
-      int s = 5 - ((Integer.numberOfLeadingZeros(intValue) + 3) / 7);
+      int s = (38 - Integer.numberOfLeadingZeros(intValue)) / 7;
       return s == 0 ? 1 : s;
     }
   }

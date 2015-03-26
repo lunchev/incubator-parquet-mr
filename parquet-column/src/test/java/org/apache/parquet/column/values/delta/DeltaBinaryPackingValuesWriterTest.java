@@ -43,7 +43,7 @@ public class DeltaBinaryPackingValuesWriterTest {
     blockSize = 128;
     miniBlockNum = 4;
     writer = new DeltaBinaryPackingValuesWriter(blockSize, miniBlockNum, 100, 200);
-    random = new Random();
+    random = new Random(0);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -129,10 +129,10 @@ public class DeltaBinaryPackingValuesWriterTest {
   public void shouldReadMaxMinValue() throws IOException {
     int[] data = new int[10];
     for (int i = 0; i < data.length; i++) {
-      if(i%2==0) {
-        data[i]=Integer.MIN_VALUE;
-      }else {
-        data[i]=Integer.MAX_VALUE;
+      if (i % 2 == 0) {
+        data[i] = Integer.MIN_VALUE;
+      } else {
+        data[i] = Integer.MAX_VALUE;
       }
     }
     shouldWriteAndRead(data);
@@ -142,10 +142,10 @@ public class DeltaBinaryPackingValuesWriterTest {
   public void shouldReadMaxMinValueLong() throws IOException {
     long[] data = new long[10];
     for (int i = 0; i < data.length; i++) {
-      if(i%2==0) {
-        data[i]=Long.MIN_VALUE;
-      }else {
-        data[i]=Long.MAX_VALUE;
+      if (i % 2 == 0) {
+        data[i] = Long.MIN_VALUE;
+      } else {
+        data[i] = Long.MAX_VALUE;
       }
     }
     shouldReadAndWriteLong(data, data.length);

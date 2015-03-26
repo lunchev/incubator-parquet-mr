@@ -21,12 +21,9 @@ package org.apache.parquet.column.values.delta;
 
 import org.apache.parquet.bytes.BytesUtils;
 import org.apache.parquet.column.values.ValuesReader;
-import org.apache.parquet.column.values.bitpacking.BytePacker;
+import org.apache.parquet.column.values.bitpacking.BytePackerForLong;
 import org.apache.parquet.column.values.bitpacking.Packer;
 import org.apache.parquet.io.ParquetDecodingException;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 
 /**
  * Read values written by {@link DeltaBinaryPackingValuesWriter}
@@ -132,7 +129,7 @@ public class DeltaBinaryPackingValuesReader extends ValuesReader {
     // mini block is atomic for reading, we read a mini block when there are more values left
     int i;
     for (i = 0; i < config.miniBlockNumInABlock && valuesBuffered < totalValueCount; i++) {
-      BytePacker packer = Packer.LITTLE_ENDIAN.newBytePacker(bitWidths[i]);
+      BytePackerForLong packer = Packer.LITTLE_ENDIAN.newBytePackerForLong(bitWidths[i]);
       unpackMiniBlock(packer);
     }
 
@@ -149,13 +146,13 @@ public class DeltaBinaryPackingValuesReader extends ValuesReader {
    *
    * @param packer the packer created from bitwidth of current mini block
    */
-  private void unpackMiniBlock(BytePacker packer) {
+  private void unpackMiniBlock(BytePackerForLong packer) {
     for (int j = 0; j < config.miniBlockSizeInValues; j += 8) {
       unpack8Values(packer);
     }
   }
 
-  private void unpack8Values(BytePacker packer) {
+  private void unpack8Values(BytePackerForLong packer) {
     //calculate the pos because the packer api uses array not stream
     int pos = page.length - in.available();
     packer.unpack8Values(page, pos, valuesBuffer, valuesBuffered);

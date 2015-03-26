@@ -18,14 +18,14 @@
  */
 package parquet.column.values.delta;
 
+import java.io.IOException;
+
 import parquet.bytes.BytesInput;
 import parquet.bytes.BytesUtils;
 import parquet.bytes.CapacityByteArrayOutputStream;
-import parquet.column.values.bitpacking.BytePacker;
+import parquet.column.values.bitpacking.BytePackerForLong;
 import parquet.column.values.bitpacking.Packer;
 import parquet.io.ParquetEncodingException;
-
-import java.io.IOException;
 
 /**
  * Write integers with delta encoding and binary packing
@@ -150,7 +150,7 @@ public class DeltaBinaryPackingValuesWriterForLong {
     for (int i = 0; i < miniBlocksToFlush; i++) {
       //writing i th miniblock
       int currentBitWidth = bitWidths[i];
-      BytePacker packer = Packer.LITTLE_ENDIAN.newBytePacker(currentBitWidth);
+      BytePackerForLong packer = Packer.LITTLE_ENDIAN.newBytePackerForLong(currentBitWidth);
       int miniBlockStart = i * config.miniBlockSizeInValues;
       for (int j = miniBlockStart; j < (i + 1) * config.miniBlockSizeInValues; j += 8) {//8 values per pack
         // mini block is atomic in terms of flushing

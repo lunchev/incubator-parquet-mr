@@ -158,9 +158,9 @@ public class ParquetProperties {
       case FIXED_LEN_BYTE_ARRAY:
         return new DeltaByteArrayWriter(initialSizePerCol, pageSize);
       case INT32:
+      case INT64:
         return new DeltaBinaryPackingValuesWriter(initialSizePerCol, pageSize);
       case INT96:
-      case INT64:
       case DOUBLE:
       case FLOAT:
         return plainWriter(path, initialSizePerCol, pageSize);

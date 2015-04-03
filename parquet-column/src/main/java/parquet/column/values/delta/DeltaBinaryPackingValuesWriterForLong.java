@@ -119,7 +119,10 @@ public class DeltaBinaryPackingValuesWriterForLong {
       return;
     }
 
-    long delta = v - previousValue;//calculate delta
+    // Calculate delta. The possible overflow is accounted for. The algorithm is correct because
+    // Java long is working as a mudalar ring with base 2^64 and because of the plus and minus
+    // properties of a ring. http://en.wikipedia.org/wiki/Modular_arithmetic#Integers_modulo_n
+    long delta = v - previousValue;
     previousValue = v;
 
     deltaBlockBuffer[deltaValuesToFlush++] = delta;

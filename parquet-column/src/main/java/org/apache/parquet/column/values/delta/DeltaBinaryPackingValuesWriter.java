@@ -83,6 +83,10 @@ public class DeltaBinaryPackingValuesWriter extends ValuesWriter {
 
   @Override
   public void writeInteger(int v) {
+    /*
+     * Note: Just calling writeLong might result in a different binary representation.
+     * Example: [Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE]
+     */
     integerImplementation.writeInteger(v, baos);
   }
   

@@ -12,7 +12,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package parquet.column.values.bitpacking;
+package org.apache.parquet.column.values.bitpacking;
 
 /**
  * Packs and unpacks INT64 into bytes
@@ -20,7 +20,7 @@ package parquet.column.values.bitpacking;
  * packing unpacking treats: - n values at a time (with n % 8 == 0) - bitWidth * (n/8) bytes at a
  * time.
  *
- * @author Julien Le Dem
+ * @author Vassil Lunchev
  *
  */
 public abstract class BytePackerForLong {

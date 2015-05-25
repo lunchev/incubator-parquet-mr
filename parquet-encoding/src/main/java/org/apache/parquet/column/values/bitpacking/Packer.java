@@ -73,7 +73,7 @@ public enum Packer {
   }
 
   private static BytePackerForLongFactory getBytePackerForLongFactory(String name) {
-    return (BytePackerForLongFactory)getStaticField("parquet.column.values.bitpacking." + name, "factory");
+    return (BytePackerForLongFactory)getStaticField("org.apache.parquet.column.values.bitpacking." + name, "factory");
   }
 
   private static Object getStaticField(String className, String fieldName) {

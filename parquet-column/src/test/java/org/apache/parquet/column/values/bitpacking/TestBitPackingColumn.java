@@ -25,7 +25,6 @@ import static org.apache.parquet.column.values.bitpacking.Packer.BIG_ENDIAN;
 import java.io.IOException;
 
 import org.junit.Test;
-
 import org.apache.parquet.Log;
 import org.apache.parquet.column.values.ValuesReader;
 import org.apache.parquet.column.values.ValuesWriter;

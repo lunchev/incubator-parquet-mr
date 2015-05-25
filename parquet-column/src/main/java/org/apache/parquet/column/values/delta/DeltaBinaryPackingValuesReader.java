@@ -18,6 +18,8 @@
  */
 package org.apache.parquet.column.values.delta;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 import org.apache.parquet.bytes.BytesUtils;
 import org.apache.parquet.column.values.ValuesReader;
